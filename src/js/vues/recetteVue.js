@@ -1,12 +1,13 @@
 import icons from 'url:../../img/icons.svg';
-
+import { Fraction } from 'fractional';
+console.log(Fraction);
 class RecetteVue {
   #elementParent = document.querySelector('.recipe');
   #data;
 
   afficherVue(donnees) {
     this.#data = donnees;
-    const html = this.#genererHtml();
+    const html = this.#genererHtmlRecette();
     this.#nettoyerVue();
     this.#elementParent.insertAdjacentHTML('afterbegin', html);
   }
@@ -26,8 +27,14 @@ class RecetteVue {
     this.#elementParent.innerHTML = '';
     this.#elementParent.insertAdjacentHTML('afterbegin', html);
   }
+  // le controlleur souscrit à la vue (il devient le gestionnaire d'évements). Il reçoit tous les évenements de l'utilisateur et enclenche les actions à effectuer
+  affichageEnLienAvecLesActionsUtilisateur(gestionnaireDevements) {
+    ['hashchange', 'load'].forEach(event =>
+      window.addEventListener(event, gestionnaireDevements)
+    );
+  }
 
-  #genererHtml() {
+  #genererHtmlRecette() {
     return `
           <figure class="recipe__fig">
             <img src="${this.#data.image}" alt="${
@@ -88,20 +95,7 @@ class RecetteVue {
             <ul class="recipe__ingredient-list">
 
               ${this.#data.ingredients
-                .map(ing => {
-                  return `
-                <li class="recipe__ingredient">
-                  <svg class="recipe__icon">
-                    <use href="${icons}#icon-check"></use>
-                  </svg>
-                  <div class="recipe__quantity">${ing.quantite}</div>
-                  <div class="recipe__description">
-                    <span class="recipe__unit">${ing.unite}</span>
-                    ${ing.description}
-                  </div>
-                </li>
-                `;
-                })
+                .map(this.#genererHtmlIngredients)
                 .join('')}
 
               
@@ -129,6 +123,23 @@ class RecetteVue {
             </a>
           </div>
     `;
+  }
+
+  #genererHtmlIngredients(ing) {
+    return `
+      <li class="recipe__ingredient">
+        <svg class="recipe__icon">
+          <use href="${icons}#icon-check"></use>
+        </svg>
+        <div class="recipe__quantity">${
+          ing.quantite ? new Fraction(ing.quantite).toString() : ''
+        }</div>
+        <div class="recipe__description">
+          <span class="recipe__unit">${ing.unite}</span>
+          ${ing.description}
+        </div>
+      </li>
+      `;
   }
 }
 

@@ -1,4 +1,6 @@
-import { renommerLesProprietesDunObject } from './utils';
+import { renommerLesProprietesDunObject } from './helpers.js';
+import { API_URL } from './config.js';
+import { recupererJSON } from './helpers.js';
 
 export const state = {
   recette: {},
@@ -6,14 +8,7 @@ export const state = {
 
 export const chargerRecette = async function (id) {
   try {
-    const reponse = await fetch(
-      `https://forkify-api.herokuapp.com/api/v2/recipes/${id}`
-    );
-    // on convertit la réponse au format json
-    const donnees = await reponse.json();
-
-    if (!reponse.ok) throw new Error(`${donnees.message} (${reponse.status})`);
-
+    const donnees = await recupererJSON(`${API_URL}/${id}`);
     // On réecrit l'objet données dans une variable recette un peu lieux formattée
     let recette = donnees.data.recipe;
     state.recette = {
