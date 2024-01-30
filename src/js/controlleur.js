@@ -22,7 +22,7 @@ const controlleurRecette = async function () {
 
     // On affiche maintenant le bout de code html de la recette
   } catch (erreur) {
-    alert(erreur);
+    recetteVue.afficherErreurs();
   }
 };
 

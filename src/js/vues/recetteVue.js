@@ -4,6 +4,8 @@ console.log(Fraction);
 class RecetteVue {
   #elementParent = document.querySelector('.recipe');
   #data;
+  #messageDerreur = `Nous n'avons pas pu trouver la recette. Veuillez réessayer`;
+  #message = '';
 
   afficherVue(donnees) {
     this.#data = donnees;
@@ -24,9 +26,41 @@ class RecetteVue {
       </svg>
     </div>
     `;
-    this.#elementParent.innerHTML = '';
+    this.#nettoyerVue();
     this.#elementParent.insertAdjacentHTML('afterbegin', html);
   }
+
+  afficherErreurs(message = this.#messageDerreur) {
+    const html = `
+    <div class="error">
+      <div>
+        <svg>
+          <use href="${icons}#icon-alert-triangle"></use>
+        </svg>
+      </div>
+      <p>${message}</p>
+    </div>
+    `;
+    this.#nettoyerVue();
+    this.#elementParent.insertAdjacentHTML('afterbegin', html);
+  }
+
+  afficherMessage(message = this.#message) {
+    const html = `
+      <div class="recipe">
+        <div class="message">
+          <div>
+            <svg>
+              <use href="${icons}#icon-smile"></use>
+            </svg>
+          </div>
+        <p>${message}</p>
+      </div>
+    `;
+    this.#nettoyerVue();
+    this.#elementParent.insertAdjacentHTML('afterbegin', html);
+  }
+
   // le controlleur souscrit à la vue (il devient le gestionnaire d'évements). Il reçoit tous les évenements de l'utilisateur et enclenche les actions à effectuer
   affichageEnLienAvecLesActionsUtilisateur(gestionnaireDevements) {
     ['hashchange', 'load'].forEach(event =>

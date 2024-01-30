@@ -8,7 +8,7 @@ export const state = {
 
 export const chargerRecette = async function (id) {
   try {
-    const donnees = await recupererJSON(`${API_URL}/${id}`);
+    const donnees = await recupererJSON(`${API_URL}${id}`);
     // On réecrit l'objet données dans une variable recette un peu lieux formattée
     let recette = donnees.data.recipe;
     state.recette = {
@@ -32,6 +32,15 @@ export const chargerRecette = async function (id) {
       clefs
     );
   } catch (erreur) {
-    alert(erreur);
+    throw erreur;
+  }
+};
+
+export const chargerResultatsRecherche = async function (requete) {
+  try {
+    const donnees = await recupererJSON(`${API_URL}?search=${requete}`);
+    console.log(donnees);
+  } catch (erreur) {
+    throw erreur;
   }
 };
