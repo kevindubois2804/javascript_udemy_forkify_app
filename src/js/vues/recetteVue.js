@@ -1,81 +1,49 @@
 import icons from 'url:../../img/icons.svg';
 import { Fraction } from 'fractional';
-console.log(Fraction);
-class RecetteVue {
-  #elementParent = document.querySelector('.recipe');
-  #data;
-  #messageDerreur = `Nous n'avons pas pu trouver la recette. Veuillez réessayer`;
-  #message = '';
+import Vue from './Vue';
 
-  afficherVue(donnees) {
-    this.#data = donnees;
-    const html = this.#genererHtmlRecette();
-    this.#nettoyerVue();
-    this.#elementParent.insertAdjacentHTML('afterbegin', html);
-  }
+class RecetteVue extends Vue {
+  _elementParent = document.querySelector('.recipe');
+  _messageDerreur = `Nous n'avons pas pu trouver la recette. Veuillez réessayer`;
+  _message = '';
 
-  #nettoyerVue() {
-    this.#elementParent.innerHTML = '';
-  }
-
-  afficherIconeDeChargement() {
-    const html = `
-    <div class="spinner">
-      <svg>
-        <use href="${icons}#icon-loader"></use>
-      </svg>
-    </div>
-    `;
-    this.#nettoyerVue();
-    this.#elementParent.insertAdjacentHTML('afterbegin', html);
-  }
-
-  afficherErreurs(message = this.#messageDerreur) {
-    const html = `
-    <div class="error">
-      <div>
-        <svg>
-          <use href="${icons}#icon-alert-triangle"></use>
-        </svg>
-      </div>
-      <p>${message}</p>
-    </div>
-    `;
-    this.#nettoyerVue();
-    this.#elementParent.insertAdjacentHTML('afterbegin', html);
-  }
-
-  afficherMessage(message = this.#message) {
-    const html = `
-      <div class="recipe">
-        <div class="message">
-          <div>
-            <svg>
-              <use href="${icons}#icon-smile"></use>
-            </svg>
-          </div>
-        <p>${message}</p>
-      </div>
-    `;
-    this.#nettoyerVue();
-    this.#elementParent.insertAdjacentHTML('afterbegin', html);
-  }
-
-  // le controlleur souscrit à la vue (il devient le gestionnaire d'évements). Il reçoit tous les évenements de l'utilisateur et enclenche les actions à effectuer
-  affichageEnLienAvecLesActionsUtilisateur(gestionnaireDevements) {
+  // le controleur souscrit à la vue (il devient le gestionnaire d'évements). Il reçoit tous les évenements de l'utilisateur et enclenche les actions à effectuer
+  affichageALecouteDuHashEtDuChargementDePage(gestionnaireDevements) {
     ['hashchange', 'load'].forEach(event =>
       window.addEventListener(event, gestionnaireDevements)
     );
   }
 
-  #genererHtmlRecette() {
+  affichageALecouteDuCliqueDesBoutonsDeModifDesPortions(
+    gestionnaireDevenements
+  ) {
+    this._elementParent.addEventListener('click', function (e) {
+      const bouton = e.target.closest('.btn--update-servings');
+
+      if (!bouton) return;
+
+      const nouvellesPortions = Number(bouton.dataset.updateTo);
+
+      if (nouvellesPortions > 0) gestionnaireDevenements(nouvellesPortions);
+    });
+  }
+
+  affichageALecouteDeLaMiseEnFavoriDuneRecette(gestionnaireDevements) {
+    this._elementParent.addEventListener('click', function (e) {
+      const bouton = e.target.closest('.btn--bookmark');
+      if (!bouton) return;
+      gestionnaireDevements();
+    });
+  }
+
+  _genererHtml() {
     return `
           <figure class="recipe__fig">
-            <img src="${this.#data.image}" alt="${
-      this.#data.titre
+            <img src="${this._data.image}" alt="${
+      this._data.titre
     }" class="recipe__img" />
             <h1 class="recipe__title">
-              <span>${this.#data.titre}</span>
+              <span>${this._data.titre}</span>
             </h1>
           </figure>
 
@@ -85,7 +53,7 @@ class RecetteVue {
                 <use href="${icons}#icon-clock"></use>
               </svg>
               <span class="recipe__info-data recipe__info-data--minutes">${
-                this.#data.tempsPreparation
+                this._data.tempsPreparation
               }</span>
               <span class="recipe__info-text">minutes</span>
             </div>
@@ -94,17 +62,21 @@ class RecetteVue {
                 <use href="${icons}#icon-users"></use>
               </svg>
               <span class="recipe__info-data recipe__info-data--people">${
-                this.#data.portions
+                this._data.portions
               }</span>
               <span class="recipe__info-text">personnes</span>
 
               <div class="recipe__info-buttons">
-                <button class="btn--tiny btn--increase-servings">
+                <button class="btn--tiny btn--update-servings" data-update-to="${
+                  this._data.portions - 1
+                }">
                   <svg>
                     <use href="${icons}#icon-minus-circle"></use>
                   </svg>
                 </button>
-                <button class="btn--tiny btn--increase-servings">
+                <button class="btn--tiny btn--update-servings" data-update-to="${
+                  this._data.portions + 1
+                }">
                   <svg>
                     <use href="${icons}#icon-plus-circle"></use>
                   </svg>
@@ -113,13 +85,13 @@ class RecetteVue {
             </div>
 
             <div class="recipe__user-generated">
-              <svg>
-                <use href="${icons}#icon-user"></use>
-              </svg>
+             
             </div>
-            <button class="btn--round">
+            <button class="btn--round btn--bookmark">
               <svg class="">
-                <use href="${icons}#icon-bookmark-fill"></use>
+                <use href="${icons}#icon-bookmark${
+      this._data.favori ? '-fill' : ''
+    }"></use>
               </svg>
             </button>
           </div>
@@ -128,8 +100,8 @@ class RecetteVue {
             <h2 class="heading--2">Ingrédients de la recette</h2>
             <ul class="recipe__ingredient-list">
 
-              ${this.#data.ingredients
-                .map(this.#genererHtmlIngredients)
+              ${this._data.ingredients
+                .map(this._genererHtmlIngredients)
                 .join('')}
 
               
@@ -142,12 +114,12 @@ class RecetteVue {
             <p class="recipe__directions-text">
               Cette recette a été concoctée par
               <span class="recipe__publisher">${
-                this.#data.auteur
-              }</span>. Pour les instructions détaillées rendez-vous sur le site de l'auteur de la this.#data
+                this._data.auteur
+              }</span>. Pour les instructions détaillées rendez-vous sur le site de l'auteur de la this._data
             </p>
             <a
               class="btn--small recipe__btn"
-              href="${this.#data.url}"
+              href="${this._data.url}"
               target="_blank"
             >
               <span>Directions</span>
@@ -159,7 +131,7 @@ class RecetteVue {
     `;
   }
 
-  #genererHtmlIngredients(ing) {
+  _genererHtmlIngredients(ing) {
     return `
       <li class="recipe__ingredient">
         <svg class="recipe__icon">
