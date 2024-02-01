@@ -7,6 +7,10 @@ class FavorisVue extends Vue {
   _messageDerreur = `Pas de recettes en favoris. Trouvez-en une et ajoutez la dans vos favoris !`;
   _message = '';
 
+  affichageALecouteDuChargementDePage(gestionnaireDevements) {
+    window.addEventListener('load', gestionnaireDevements);
+  }
+
   _genererHtml() {
     return this._data
       .map(favori => apercuVue.afficherVue(favori, false))

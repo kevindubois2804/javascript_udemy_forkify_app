@@ -14,6 +14,10 @@ export const etat = {
   favoris: [],
 };
 
+const persisterFavoris = function () {
+  localStorage.setItem('favoris', JSON.stringify(etat.favoris));
+};
+
 export const chargerRecette = async function (id) {
   try {
     const donnees = await recupererJSON(`${API_URL}${id}`);
@@ -94,6 +98,8 @@ export const ajouterFavori = function (recette) {
 
   // il faut aussi marquer la recette en tant que favori sur l'icône
   if (recette.id === etat.recette.id) etat.recette.favori = true;
+
+  persisterFavoris();
 };
 
 export const supprimerFavori = function (id) {
@@ -104,4 +110,14 @@ export const supprimerFavori = function (id) {
 
   // il faut maintenant effacer la marque qui indique que la recette est en favori sur l'icône
   if (id === etat.recette.id) etat.recette.favori = false;
+
+  persisterFavoris();
 };
+
+const init = function () {
+  const storage = localStorage.getItem('favoris');
+  if (storage) etat.favoris = JSON.parse(storage);
+};
+
+init();
+console.log(etat.favoris);

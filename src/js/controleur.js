@@ -25,6 +25,8 @@ const controleurRecette = async function () {
 
     // on met à jour la vue des resultats pour mettre en surbrillance le résultat sélectionné
     resultatsVue.modifierVue(modele.recupererResultatsRechercheParPage());
+
+    // on met à jour la vue des favoris
     favorisVue.modifierVue(modele.etat.favoris);
 
     // on vient populer le tableau etat.recette
@@ -49,8 +51,6 @@ const controleurResultatsRecherche = async function () {
 
     // on charge les résultats dans le tableau etat.recherche.resultats
     await modele.chargerResultatsRecherche(requete);
-
-    console.log(modele.etat.recherche.resultats);
 
     // on affiche les résultats
     resultatsVue.afficherVue(modele.recupererResultatsRechercheParPage());
@@ -81,7 +81,7 @@ const controleurPortions = function (nouvellesPortions) {
   recetteVue.modifierVue(modele.etat.recette);
 };
 
-const controleurFavoris = function () {
+const controleurCrudFavoris = function () {
   // contrôle de l'ajout ou de la suppression d'un favori
   if (!modele.etat.recette.favori) modele.ajouterFavori(modele.etat.recette);
   else modele.supprimerFavori(modele.etat.recette.id);
@@ -93,12 +93,20 @@ const controleurFavoris = function () {
   favorisVue.afficherVue(modele.etat.favoris);
 };
 
+const controleurRenduFavoris = function () {
+  favorisVue.afficherVue(modele.etat.favoris);
+};
+
 const init = function () {
   recetteVue.affichageALecouteDuHashEtDuChargementDePage(controleurRecette);
   recetteVue.affichageALecouteDuCliqueDesBoutonsDeModifDesPortions(
     controleurPortions
   );
-  recetteVue.affichageALecouteDeLaMiseEnFavoriDuneRecette(controleurFavoris);
+  recetteVue.affichageALecouteDeLaMiseEnFavoriDuneRecette(
+    controleurCrudFavoris
+  );
+
+  favorisVue.affichageALecouteDuChargementDePage(controleurRenduFavoris);
 
   rechercheVue.affichageALecouteDeLaRecherche(controleurResultatsRecherche);
   paginationVue.affichageALecouteDuCliqueDesBoutonsDePagination(
