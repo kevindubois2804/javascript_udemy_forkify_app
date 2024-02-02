@@ -114,10 +114,13 @@ export const supprimerFavori = function (id) {
   persisterFavoris();
 };
 
+const purgerStockageLocalFavoris = function () {
+  localStorage.clear('favoris');
+};
+
 const init = function () {
   const storage = localStorage.getItem('favoris');
   if (storage) etat.favoris = JSON.parse(storage);
 };
 
 init();
-console.log(etat.favoris);
