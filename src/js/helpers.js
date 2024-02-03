@@ -8,14 +8,25 @@ export const timeout = function (s) {
   });
 };
 
-export const recupererJSON = async function (url) {
+export const AJAX = async function (url, uploadDonnees = undefined) {
   try {
-    const reponse = await Promise.race([fetch(url), timeout(TIMEOUT_SECONDS)]);
-    // on convertit la réponse au format json
+    const fetchPromise = uploadDonnees
+      ? fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(uploadDonnees),
+        })
+      : fetch(url);
+
+    const reponse = await Promise.race([
+      fetchPromise,
+      timeout(TIMEOUT_SECONDS),
+    ]);
     const donnees = await reponse.json();
 
     if (!reponse.ok) throw new Error(`${donnees.message} (${reponse.status})`);
-
     return donnees;
   } catch (erreur) {
     throw erreur;

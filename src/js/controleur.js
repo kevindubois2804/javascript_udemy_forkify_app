@@ -1,9 +1,11 @@
 import * as modele from './modele.js';
+import { FENETRE_FERMETURE_SECONDS } from './config.js';
 import recetteVue from './vues/recetteVue.js';
 import rechercheVue from './vues/rechercheVue.js';
 import resultatsVue from './vues/resultatsVue.js';
 import favorisVue from './vues/favorisVue.js';
 import paginationVue from './vues/paginationVue.js';
+import creationRecetteVue from './vues/creationRecetteVue.js';
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
@@ -97,6 +99,36 @@ const controleurRenduFavoris = function () {
   favorisVue.afficherVue(modele.etat.favoris);
 };
 
+const controleurCreationrecettes = async function (nouvelleRecette) {
+  try {
+    // on affiche un icone de chargement pendant que le fetch se fait
+    creationRecetteVue.afficherIconeDeChargement();
+
+    // upload les données de la nouvelle recette
+    await modele.uploadRecette(nouvelleRecette);
+    console.log(modele.etat.recette);
+
+    // on affiche un message de succès
+    creationRecetteVue.afficherMessage();
+
+    // on affichage le listing des favoris (la recette crée est auto. ajoutée aux favoris)
+    favorisVue.afficherVue(modele.etat.favoris);
+
+    // on change l'id de la recette dans l'url pour celui de la rectete fraichement crée
+    window.history.pushState(null, '', `#${modele.etat.recette.id}`);
+
+    // on affiche la recette fraichement crée
+    recetteVue.afficherVue(modele.etat.recette);
+
+    // fermer la fenêtre de création de recettes
+    setTimeout(function () {
+      creationRecetteVue.toggleFenetre();
+    }, FENETRE_FERMETURE_SECONDS * 1000);
+  } catch (erreur) {
+    creationRecetteVue.afficherErreurs(erreur.message);
+  }
+};
+
 const init = function () {
   recetteVue.affichageALecouteDuHashEtDuChargementDePage(controleurRecette);
   recetteVue.affichageALecouteDuCliqueDesBoutonsDeModifDesPortions(
@@ -111,6 +143,9 @@ const init = function () {
   rechercheVue.affichageALecouteDeLaRecherche(controleurResultatsRecherche);
   paginationVue.affichageALecouteDuCliqueDesBoutonsDePagination(
     controleurPagination
+  );
+  creationRecetteVue._affichageALecouteDeSoumissionRecette(
+    controleurCreationrecettes
   );
 };
 

@@ -1,7 +1,7 @@
 import { renommerLesProprietesDunObject } from './helpers.js';
-import { API_URL } from './config.js';
-import { RESULTATS_PAR_PAGE } from './config.js';
-import { recupererJSON } from './helpers.js';
+import { API_URL, RESULTATS_PAR_PAGE, KEY } from './config.js';
+
+import { AJAX } from './helpers.js';
 
 export const etat = {
   recette: {},
@@ -14,35 +14,43 @@ export const etat = {
   favoris: [],
 };
 
+const creerObjetRecette = function (donnees) {
+  // On réecrit l'objet données dans une variable recette un peu lieux formattée
+  let recette = donnees.data.recipe;
+  let objetRecette = {
+    id: recette.id,
+    titre: recette.title,
+    auteur: recette.publisher,
+    url: recette.source_url,
+    image: recette.image_url,
+    portions: recette.servings,
+    tempsPreparation: recette.cooking_time,
+    ingredients: recette.ingredients,
+    ...(recette.key && { key: recette.key }),
+  };
+
+  // On renomme aussi les propriétés des objects contenues dans recette.ingredients. Pour cela on fait appelle à une fonction récursive
+  const clefs = {
+    quantity: 'quantite',
+    unit: 'unite',
+  };
+  objetRecette.ingredients = renommerLesProprietesDunObject(
+    objetRecette.ingredients,
+    clefs
+  );
+
+  return objetRecette;
+};
+
 const persisterFavoris = function () {
   localStorage.setItem('favoris', JSON.stringify(etat.favoris));
 };
 
 export const chargerRecette = async function (id) {
   try {
-    const donnees = await recupererJSON(`${API_URL}${id}`);
-    // On réecrit l'objet données dans une variable recette un peu lieux formattée
-    let recette = donnees.data.recipe;
-    etat.recette = {
-      id: recette.id,
-      titre: recette.title,
-      auteur: recette.publisher,
-      url: recette.source_url,
-      image: recette.image_url,
-      portions: recette.servings,
-      tempsPreparation: recette.cooking_time,
-      ingredients: recette.ingredients,
-    };
+    const donnees = await AJAX(`${API_URL}${id}?key=${KEY}`);
 
-    // On renomme aussi les propriétés des objects contenues dans recette.ingredients. Pour cela on fait appelle à une fonction récursive
-    const clefs = {
-      quantity: 'quantite',
-      unit: 'unite',
-    };
-    etat.recette.ingredients = renommerLesProprietesDunObject(
-      etat.recette.ingredients,
-      clefs
-    );
+    etat.recette = creerObjetRecette(donnees);
 
     if (etat.favoris.some(favori => favori.id === id)) {
       etat.recette.favori = true;
@@ -56,7 +64,7 @@ export const chargerRecette = async function (id) {
 
 export const chargerResultatsRecherche = async function (requete) {
   try {
-    const donnees = await recupererJSON(`${API_URL}?search=${requete}`);
+    const donnees = await AJAX(`${API_URL}?search=${requete}&key=${KEY}`);
 
     let recettes = donnees.data.recipes;
     etat.recherche.resultats = recettes.map(recette => {
@@ -65,6 +73,7 @@ export const chargerResultatsRecherche = async function (requete) {
         titre: recette.title,
         auteur: recette.publisher,
         image: recette.image_url,
+        ...(recette.key && { key: recette.key }),
       };
     });
 
@@ -124,3 +133,44 @@ const init = function () {
 };
 
 init();
+
+export const uploadRecette = async function (nouvelleRecette) {
+  try {
+    const ingredients = Object.entries(nouvelleRecette)
+      .filter(entry => entry[0].startsWith('ingredient') && entry[1] !== '')
+      .map(ing => {
+        const tableauIngredients = ing[1].split(',').map(el => el.trim());
+
+        if (tableauIngredients.length !== 3)
+          throw new Error(
+            "Le format d'ingrédients spécifié n'est pas correct. Veuillez utiliser le bon format"
+          );
+        const [quantity, unit, description] = tableauIngredients;
+        return {
+          quantity: quantity ? Number(quantity) : null,
+          unit,
+          description,
+        };
+      });
+
+    const recette = {
+      title: nouvelleRecette.title,
+      source_url: nouvelleRecette.sourceUrl,
+      image_url: nouvelleRecette.image,
+      publisher: nouvelleRecette.publisher,
+      cooking_time: Number(nouvelleRecette.cookingTime),
+      servings: Number(nouvelleRecette.servings),
+      ingredients,
+    };
+
+    const donnees = await AJAX(`${API_URL}?key=${KEY}`, recette);
+
+    etat.recette = creerObjetRecette(donnees);
+
+    ajouterFavori(etat.recette);
+  } catch (erreur) {
+    throw erreur;
+  }
+};
+
+purgerStockageLocalFavoris();
